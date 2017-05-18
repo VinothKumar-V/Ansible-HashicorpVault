@@ -26,7 +26,7 @@ def vault_status(url):
 		msg = 'Status code was not %s :: Responded Status code %s' % (module.params['status_code'], stdout.status_code)
 		module.fail_json(msg=msg)
         else:
-		module.exit_json(changed=True, responce=stdout.json())
+		module.exit_json(changed=False, responce=stdout.json())
 	
 if __name__ == '__main__':
         main()
