@@ -8,6 +8,7 @@ def main():
                         host  = dict(required=True, type='str'),
                         rootkey = dict(required=False, type='str'),
                         method = dict(required=False, default='GET', type='str'),
+			status_code = dict(required=False, default=[200], type='list'),
 			action = dict(required=False, default='status', type='str')
                         )
                 )
@@ -21,8 +22,11 @@ def main():
 
 def vault_status(url):
 	stdout = requests.get(url)
-	
-	module.exit_json(changed=True, responce=stdout)
+	if stdout.status_code not in module.params['status_code']:
+		msg = 'Status code was not %s' % module.params['status_code']
+		module.fail_json(msg=msg)
+        else:
+		module.exit_json(changed=True, responce=stdout.json())
 	
 if __name__ == '__main__':
         main()
