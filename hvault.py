@@ -1,3 +1,94 @@
+#!/usr/bin/python
+#
+#Ansible Module for Hasicopr vault Interaction
+
+#=================================
+#Todo:
+# 1. Make avaible with SSL support
+# 2. Added more option like vault init,delete,auth etc
+# 3. Make authenticate with LDAP
+#======================================
+
+
+
+DOCUMENTATION = '''
+---
+module: hvault
+author: "Vinoth V(vinoth.pulsars@gmail.com :: https://github.com/VinothKumar-V)"
+short_description: Ansible Module for Hasicopr vault Interaction
+description:
+  - Ansible Module for Hasicopr vault Interaction with  basic future added .
+version_added: "1.1"
+options:
+  action:
+   description:
+    - What action your going to do with module
+   choice: ["status", "seal-status", "seal", "unseal", "read", "write"]
+  host:
+   description:
+    - Vault Server hostname
+   required: true
+   default: status
+  port:
+   description:
+    - Vault Server port number default [8200]
+   default: 8200
+  root_token:
+   description:
+    - Vault root token to Read/Write/Seal
+  unseal_key:
+   description:
+    - Vault unseal key to unseal the vault server
+  secret_to_write:
+   description:
+    - Vault secret that you want to save in Vault server
+  secret_path:
+   description:
+    - Vault path to save all your secret
+'''
+EXAMPLES = '''
+   - name: check vault status
+     hvault:
+       host: localhost
+
+   - name: check vault seal-status
+     hvault:
+       host: localhost
+       action: seal-status
+
+   - name: Vault-Seal
+     hvault:
+       host: localhost
+       action: seal
+       root_token: c91044e8-375b-812c-502e-08ba46ec3c89
+
+   - name: Vault-unSeal
+     hvault:
+       host: localhost
+       unseal_key: '{"key":"B1hErjugs20NrK7V3uTgcAiusE1fKpWEHSD+2/xgTxU="}'
+       action: unseal
+
+   - name: Vault-Write
+     hvault:
+       host: localhost
+       action: write
+       secret_path: 'myscret'
+       secret_to_write: '{ "password":"12345"}'
+       root_token: c91044e8-375b-812c-502e-08ba46ec3c89
+
+
+   - name: Vault-Read
+     hvault:
+       host: localhost
+       action: read
+       secret_path: 'myscret1'
+       root_token: c91044e8-375b-812c-502e-08ba46ec3c89
+     resgister: response
+'''
+     
+#############################################################################################
+  
+
 from ansible.module_utils.basic import *
 import requests
 import urllib2, urllib, json, base64
@@ -27,7 +118,6 @@ def main():
 
 	if module.params['action'] == "seal":
 		url = "http://%s:%s/v1/sys/seal" % (module.params['host'], module.params['port'])
-		#headers = {'X-Vault-Token': module.params['root_token'] }
 		vaultSeal(url)
 
 	if module.params['action'] == "unseal":
