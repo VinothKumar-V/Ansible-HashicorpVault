@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#Ansible Module for Hasicopr vault Interaction
+#Ansible Module for Hasicorp vault Interaction
 
 #=================================
 #Todo:
@@ -15,9 +15,9 @@ DOCUMENTATION = '''
 ---
 module: hvault
 author: "Vinoth V(vinoth.pulsars@gmail.com :: https://github.com/VinothKumar-V)"
-short_description: Ansible Module for Hasicopr vault Interaction
+short_description: Ansible Module for Hasicorp vault Interaction
 description:
-  - Ansible Module for Hasicopr vault Interaction with  basic future added .
+  - Ansible Module for Hasicorp vault Interaction with  basic future added .
 version_added: "1.1"
 options:
   action:
