@@ -24,18 +24,22 @@ def main():
         if module.params['action'] == "status":
 		url = "http://%s:%s/v1/sys/init" % (module.params['host'], module.params['port'])
                 vaultStatus(url)
+
 	if module.params['action'] == "seal":
 		url = "http://%s:%s/v1/sys/seal" % (module.params['host'], module.params['port'])
 		#headers = {'X-Vault-Token': module.params['root_token'] }
 		vaultSeal(url)
+
 	if module.params['action'] == "unseal":
 		url = "http://%s:%s/v1/sys/unseal" % (module.params['host'], module.params['port'])
 		data = str(module.params['unseal_key'])
 		vaultUnseal(url, data)
+
 	if  module.params['action'] == "write":
 		url = "http://%s:%s/v1/secret/%s" % (module.params['host'], module.params['port'], module.params['secret_path'])
 		data = str(module.params['secret_to_write'])
 		vaultWrite(url, data)
+
 	if  module.params['action'] == "read":
 		url = "http://%s:%s/v1/secret/%s" % (module.params['host'], module.params['port'], module.params['secret_path'])
 		vaultRead(url)
@@ -51,7 +55,6 @@ def vaultStatus(url):
 
 def vaultSeal(url):
 	stdout = requests.put(url, headers={"X-Vault-Token": module.params['root_token']})
-
         if stdout.status_code == 204:
                 module.exit_json(changed=False, responce="Success")
         else:
@@ -78,7 +81,6 @@ def vaultWrite(url, data):
 
 def vaultRead(url):
         stdout = requests.get(url, headers={"X-Vault-Token": module.params['root_token']})
-
         if stdout.status_code == 200:
                 module.exit_json(changed=False, responce=stdout.json())
         else:
