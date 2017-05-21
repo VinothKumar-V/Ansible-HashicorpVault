@@ -34,13 +34,11 @@ def main():
 		vaultUnseal(url, data)
 	if  module.params['action'] == "write":
 		url = "http://%s:%s/v1/secret/%s" % (module.params['host'], module.params['port'], module.params['secret_path'])
-		#headers ={}
-		#headers["X-Vault-Token"] = module.params['root_token']
-		#headers["Content-Type"] = 'application/json'
-		#headers = {"X-Vault-Token": module.params['root_token'], "Content-Type: application/json"}
-		#headers = str(headers)
 		data = str(module.params['secret_to_write'])
 		vaultWrite(url, data)
+	if  module.params['action'] == "read":
+		url = "http://%s:%s/v1/secret/%s" % (module.params['host'], module.params['port'], module.params['secret_path'])
+		vaultRead(url)
 				
 
 def vaultStatus(url):
@@ -77,6 +75,16 @@ def vaultWrite(url, data):
         else:
                 msg = 'Status code was not 200 :: Responded Status code %s' % stdout.status_code
                 module.fail_json(msg=data, msg1=stdout.status_code)
+
+def vaultRead(url):
+        stdout = requests.get(url, headers={"X-Vault-Token": module.params['root_token']})
+
+        if stdout.status_code == 200:
+                module.exit_json(changed=False, responce=stdout.json())
+        else:
+                msg = 'Status code was not %s :: Responded Status code %s' % (module.params['status_code'],  stdout.status_code)
+                module.fail_json(msg=msg)
+
 
 if __name__ == '__main__':
         main()
