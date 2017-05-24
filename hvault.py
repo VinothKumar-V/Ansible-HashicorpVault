@@ -103,8 +103,11 @@ def main():
 			status_code = dict(required=False, default=[200], type='list'),
 			root_token = dict(required=False, type='str'),
 			unseal_key = dict(required=False, type='str'),
-			secret_to_write = dict(required=False, type='str'),
+			secret_to_write = dict(required=False, type='dict'),
 			secret_path = dict(required=False, type='str'),
+			ldap_user = dict(required=False, type='str'),
+			ldap_pass = dict(required=False, type='str'),
+			auth_method = dict(required=False, default='key', type='str'),
 			action = dict(required=False, default='status', type='str')
                         )
                 )
@@ -118,18 +121,30 @@ def main():
 
 	if module.params['action'] == "seal":
 		url = "http://%s:%s/v1/sys/seal" % (module.params['host'], module.params['port'])
-		vaultSeal(url)
+		headers_dict = {"X-Vault-Token": module.params['root_token']}
+		headers = json.loads(json.dumps(headers_dict))
+		vaultSeal(url, headers)
 
 	if module.params['action'] == "unseal":
 		url = "http://%s:%s/v1/sys/unseal" % (module.params['host'], module.params['port'])
 		data = str(module.params['unseal_key'])
 		vaultUnseal(url, data)
 
-	if  module.params['action'] == "write":
+	if  ( module.params['action'] == "write" and module.params['auth_method'] == "key" ):
 		url = "http://%s:%s/v1/secret/%s" % (module.params['host'], module.params['port'], module.params['secret_path'])
-		data = str(module.params['secret_to_write'])
-		vaultWrite(url, data)
+		data = json.dumps(module.params['secret_to_write'])
+                headers_dict = {"X-Vault-Token": module.params['root_token'], "Content-Type": "application/json"}
+		headers = json.loads(json.dumps(headers_dict))
+		vaultWrite(url, headers, data)
 
+
+	if  ( module.params['action'] == "write" and module.params['auth_method'] == "ldap" ):
+		url = "http://%s:%s/v1/auth/ldap/login/%s" % (module.params['host'], module.params['port'], module.params['ldap_user'])
+		data = {}
+		data['password'] = module.params['ldap_pass']
+		data = json.loads(data)
+		vaultLdapWrite(url, data)
+		
 	if  module.params['action'] == "read":
 		url = "http://%s:%s/v1/secret/%s" % (module.params['host'], module.params['port'], module.params['secret_path'])
 		vaultRead(url)
@@ -143,8 +158,9 @@ def vaultStatus(url):
         else:
 		module.exit_json(changed=False, responce=stdout.json())
 
-def vaultSeal(url):
-	stdout = requests.put(url, headers={"X-Vault-Token": module.params['root_token']})
+def vaultSeal(url, headers):
+	#stdout = requests.put(url, headers={"X-Vault-Token": module.params['root_token']})
+	stdout = requests.put(url, headers=headers)
         if stdout.status_code == 204:
                 module.exit_json(changed=False, responce="Success")
         else:
@@ -159,8 +175,9 @@ def vaultUnseal(url, data):
 		msg = 'Status code was not 200 :: Responded Status code %s' % stdout.status_code
 		module.fail_json(msg=msg)	
 	
-def vaultWrite(url, data):
-	stdout = requests.post(url, headers={"X-Vault-Token": module.params['root_token'], "Content-Type": "application/json"}, data=data)
+def vaultWrite(url, headers, data):
+	#stdout = requests.post(url, headers={"X-Vault-Token": module.params['root_token'], "Content-Type": "application/json"}, data=data)
+	stdout = requests.post(url, headers=headers, data=data)
 	if stdout.status_code == 200:
                 module.exit_json(changed=False, responce=stdout.json())
 	if stdout.status_code == 204:
@@ -176,6 +193,18 @@ def vaultRead(url):
         else:
                 msg = 'Status code was not %s :: Responded Status code %s' % (module.params['status_code'],  stdout.status_code)
                 module.fail_json(msg=msg)
+
+def vaultLdapWrite(url, data):
+	stdout = requests.put(url, data=data)
+	if stdout.status_code == 200:
+		client_token = json.loads(stdout.content)["auth"][0]["client_token"]
+		url = "http://%s:%s/v1/secret/%s" % (module.params['host'], module.params['port'], module.params['secret_path'])
+		data = json.dumps(module.params['secret_to_write'])
+		headers_dict = {"X-Vault-Token": client_token, "Content-Type": "application/json"}
+		headears = json.loads(json.dumps(headers_dict))
+		vaultWrite(url, headers, data)
+
+		
 
 
 if __name__ == '__main__':
